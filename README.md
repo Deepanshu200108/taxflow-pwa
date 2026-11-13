@@ -1,34 +1,25 @@
-# TaxFlow v3 — WebView-style PWA
+# TaxFlow v5 — invoice autocomplete and workbook layout update
 
-This package is a browser-installed desktop-style PWA. It does not require Python, Node, Streamlit, or a Windows EXE on the destination laptop.
+## Publish/update
+Replace the files in the root of your existing GitHub Pages repository with these files. Keep the repository public app files only; never upload customer invoices, backups or private financial data.
 
-## Important architecture
-- Static HTML/CSS/JavaScript; no backend or server-side database.
-- Records are stored in IndexedDB in the browser profile on that laptop.
-- PDFs are generated using the browser's Print dialog: choose **Save as PDF**.
-- Records do NOT sync between laptops. Export a JSON backup from Invoice Register and keep PDF files backed up.
-- Host the folder on an HTTPS static host (for example GitHub Pages) to enable PWA installation and service-worker offline caching. The code and UI are hosted; invoice records remain in the browser's local IndexedDB.
+## Install
+Open the GitHub Pages HTTPS URL in Microsoft Edge → menu → Apps → Install this site as an app.
 
-## Publish using GitHub Pages
-1. Create a private GitHub repository named `taxflow-pwa`.
-2. Upload all files in this folder to the repository root.
-3. In repository Settings → Pages, choose Deploy from a branch → `main` → `/ (root)` → Save.
-4. Wait for the HTTPS Pages URL to appear.
-5. Open that URL in Microsoft Edge on each laptop.
-6. Edge menu (…) → Apps → Install this site as an app. Pin it to Start or create a desktop shortcut.
+## Feedback implemented
+- Invoice number suggestion: focus the invoice number field or press Tab while it is blank / contains only the prefix. It suggests the next sequence using the configured prefix. Default is `JAI/26-27/27`, based on the latest invoice number visible in the uploaded workbook (`JAI/26-27/26`). Change prefix and next sequence in Settings.
+- Customer autocomplete, with sample customers extracted from the uploaded workbook.
+- Service description and SAC autocomplete, with common service examples from the workbook.
+- Customer billing/registered address and project work/site address are separate fields.
+- Company name, Jaipur registered address, GSTIN `08APRPD1249Q1ZA`, PAN `APRPD1249Q`, and state code `08` are prefilled from the workbook and editable in Settings.
+- Invoice line columns follow the requested layout: Sr. No., Description of Services, HSN/SAC, GST Rate, Quantity in MT, Rate, Amount.
+- Invoice PDF includes company details, buyer billing address, separate work/site address, buyer GSTIN, work order and service line table.
 
-GitHub Pages hosting may be public depending on your GitHub plan/repository configuration. Do not put customer records, GSTINs, PDFs, or other private data in the repository.
+## Local data and PDFs
+Records are stored in this browser profile's IndexedDB. Select a folder from Settings to write PDF copies into `Invoices` and `RA Bills` folders. Browser folder access requires explicit permission and desktop Edge/Chrome. If folder access is unavailable, download PDFs from the in-app preview.
 
-## Local use / install
-The PWA must first be served from HTTPS or localhost for service-worker installation. Opening index.html as a file will let you test the UI, but installation/offline PWA features will not work correctly.
+## Moving to another laptop
+Use JSON export/import for invoice/RA records, customers, services and company settings. This JSON backup does not embed PDF binary files. Copy the separate `Invoices` and `RA Bills` folders too. No automatic cloud synchronization is included.
 
-## Data safety
-Use Invoice Register → Export backup JSON regularly. Browser storage is local to the browser profile and can be cleared by browser cleanup, profile reset, or uninstall/data deletion. Keep downloaded PDFs in Documents/TaxFlow yourself.
-
-## Limitations in this starter
-- This is a functional prototype, not certified GST software.
-- SAC is currently a placeholder in the preview; verify and add correct SAC per service.
-- Invoice amount in words, HSN/SAC master, credit/debit notes, cancellation, audit trail, import/restore, and e-invoicing/IRN are not implemented.
-- GST is simplified to an entered rate and an intra/inter-state toggle. Confirm place-of-supply, rates, reverse charge, TDS and cess with your CA.
-- The PDF preview uses browser print-to-PDF rather than silently writing to a protected folder. Browsers do not permit arbitrary silent writes to local folders without explicit user permission.
-- Data is not shared across laptops. Export/import workflow is needed for migration.
+## Important limitations
+This is a prototype, not certified GST/accounting software. GST calculations are simplified and manual intra/inter-state selection is provided. The app does not determine place of supply, validate GST law, support IRN/e-invoice, e-way bills, credit/debit notes, cancellation workflow or audit logs. Confirm SAC, rates, GST treatment, TDS, labour cess and place-of-supply with your CA before statutory use. Some historical Excel invoices have inconsistent formulas/tax labels; these have not been copied as calculation rules.
