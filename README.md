@@ -29,3 +29,13 @@ This is a prototype, not certified GST/accounting software. GST calculations are
 - Reworked A4 PDF invoice layout with company masthead, buyer and project/site address blocks, work order metadata, styled service table, tax summary, bank details and declaration/signature area.
 - Company identity is stored once in Settings and reused on each PDF. Customer master selection fills saved buyer details; project site remains invoice-specific.
 - Confirm all company bank/GST details and statutory invoice fields before real issue.
+
+## v7 fixes: simpler entry and reliable local PDF download
+- Removed company-state, default GST and bank-detail entry from the invoice form. Company identity and bank details are read from Settings.
+- Customer selection now fills GSTIN, billing address, work-site address and state code from the customer master. Only edit fields that are new for this bill.
+- Corrected service-line field mapping so description, SAC, GST rate, quantity, rate and amount are saved in the right columns.
+- On every successful save, TaxFlow archives the PDF in this browser's IndexedDB and automatically downloads a named PDF into the browser's Downloads folder.
+- Optional archive-folder copy remains available in Settings. If folder permission is unsupported or denied, the automatic Downloads copy still works.
+- Updated the service-worker cache version so GitHub Pages clients fetch the new interface after refresh.
+
+**Note:** PDF generation uses jsPDF from a CDN, so the first PDF generation requires an internet connection. After the app has loaded and the library is cached by the browser, availability may improve offline, but do not rely on offline PDF generation until tested.
