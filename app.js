@@ -11,58 +11,73 @@ function clear(n){return new Promise(res=>{let r=os(n,'readwrite').clear();r.ons
 function getSetting(){return new Promise(res=>{let r=os('settings').get('company');r.onsuccess=()=>res(r.result?.value||{company:'SUNRISE PRESTRESS PROJECTS',gstin:'08APRPD1249Q1ZA',pan:'APRPD1249Q',address:'101, Barkat Nagar, Jaipur, Near Dispensary, Jaipur Rajasthan - 302015, India',state:'08',bank:'Bank: Axis Bank | A/c No: 924020005902287 | IFSC: UTIB0004332',prefix:'JAI/26-27/',nextInvoice:27})})}
 async function savePDF(record){
  if(!window.jspdf?.jsPDF){alert('PDF library could not load. Connect to the internet and retry.');return null}
- const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'}),c=await getSetting();
- const navy=[25,48,72],teal=[25,125,105],grey=[90,103,117],light=[239,244,248];
- const pageW=210,left=14,right=196,content=182; let y=14;
- const txt=(s,x,yy,opt={})=>doc.text(String(s??''),x,yy,opt);
- const wrap=(s,w)=>doc.splitTextToSize(String(s??''),w);
- const section=(title)=>{doc.setFillColor(...light);doc.rect(left,y,content,7,'F');doc.setTextColor(...navy);doc.setFont('helvetica','bold');doc.setFontSize(9);txt(title,left+3,y+4.8);doc.setTextColor(30,40,50);y+=11};
- const field=(label,value,x,yy,w)=>{doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...grey);txt(label.toUpperCase(),x,yy);doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(25,35,45);let lines=wrap(value||'—',w);doc.text(lines,x,yy+5);return yy+5+lines.length*4};
- const ensure=(h)=>{if(y+h>276){doc.addPage();y=16}};
- // Header block
- doc.setFillColor(...navy);doc.roundedRect(left,y,content,34,2,2,'F');
- doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(15);txt(c.company||'SUNRISE PRESTRESS PROJECTS',left+5,y+9);
- doc.setFont('helvetica','normal');doc.setFontSize(8);
- doc.text(wrap(c.address||'101, Barkat Nagar, Jaipur, Rajasthan - 302015, India',content-10),left+5,y+15);
- txt('GSTIN: '+(c.gstin||'08APRPD1249Q1ZA')+'     PAN: '+(c.pan||'APRPD1249Q'),left+5,y+29);
- doc.setTextColor(25,35,45);y+=40;
- doc.setFont('helvetica','bold');doc.setFontSize(14);txt(record.type==='Invoice'?'TAX INVOICE':'RUNNING ACCOUNT BILL',left,y);doc.setFontSize(9);doc.setTextColor(...teal);txt(record.number,right,y,{align:'right'});doc.setTextColor(25,35,45);y+=8;
- // Invoice metadata cards
- const half=88;let y1=field('Invoice date',record.date,left,y,half),y2=field('Work order no.',record.workorder,left+94,y,half);y=Math.max(y1,y2)+2;
- if(record.workdate){let a=field('Work order date',record.workdate,left,y,half),b=field('Payment terms',record.terms,left+94,y,half);y=Math.max(a,b)+2}
- section('BILL TO / CUSTOMER');
- let billY=y;
- let billLines=wrap(record.customer||'',85).concat(wrap(record.address||'',85));
- let siteLines=wrap('PROJECT / WORK SITE',82).concat(wrap(record.workAddress||record.place||'',82)).concat(wrap('GSTIN: '+(record.gstin||'')+'   State code: '+(record.state||''),82));
- doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text(wrap(record.customer||'',85),left,billY);
- doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text(wrap(record.address||'',85),left,billY+5);
- doc.setFont('helvetica','bold');doc.text('PROJECT / WORK SITE',left+96,billY);
- doc.setFont('helvetica','normal');doc.text(wrap(record.workAddress||record.place||'',82),left+96,billY+5);
- doc.text('GSTIN: '+(record.gstin||'')+'   State: '+(record.state||''),left,billY+19);
- y=billY+26;section('DESCRIPTION OF SERVICES');
- // Table headers styled to mirror workbook
- const cols=[14,24,94,116,137,157,176,196];
- doc.setFillColor(...navy);doc.rect(left,y,content,10,'F');doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(7);
- txt('Sr.',16,y+6.5);txt('Description of Services',26,y+6.5);txt('HSN/SAC',96,y+6.5);txt('GST Rate',118,y+6.5);txt('Qty (MT)',139,y+6.5);txt('Rate',161,y+6.5);txt('Amount',194,y+6.5,{align:'right'});
- y+=10;doc.setTextColor(25,35,45);doc.setFont('helvetica','normal');doc.setFontSize(7.5);
+ const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4',compress:true}),c=await getSetting();
+ const black=[25,25,25],grey=[85,85,85],line=[150,150,150],pale=[225,225,225];
+ const L=14,R=196,W=182;let y=15;
+ const text=(s,x,yy,opt={})=>doc.text(String(s??''),x,yy,opt);
+ const wrap=(s,w)=>doc.splitTextToSize(String(s??'').replace(/\s+/g,' ').trim(),w);
+ const font=(style='normal',size=8,color=black)=>{doc.setFont('helvetica',style);doc.setFontSize(size);doc.setTextColor(...color)};
+ const rule=(yy,width=.25)=>{doc.setDrawColor(...line);doc.setLineWidth(width);doc.line(L,yy,R,yy)};
+ const fmt=n=>'INR '+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const labelValue=(label,value,x,yy,width)=>{font('bold',7,grey);text(label.toUpperCase(),x,yy);font('normal',8.5,black);const ls=wrap(value||'—',width);doc.text(ls,x,yy+4.5);return yy+4.5+ls.length*4};
+ const ensure=h=>{if(y+h>270){doc.addPage();y=17}};
+ // Plain classic company heading: no logo, no colored banner.
+ font('bold',15,black);text(c.company||'SUNRISE PRESTRESS PROJECTS',L,y);
+ y+=5; font('normal',8,black);const addr=wrap(c.address||'',W);doc.text(addr.slice(0,2),L,y);y+=addr.slice(0,2).length*4;
+ font('normal',8,black);text('GSTIN: '+(c.gstin||'—')+'     PAN: '+(c.pan||'—'),L,y);y+=5;
+ rule(y,.6);y+=9;
+ // Title and invoice number on the same line.
+ font('bold',14,black);text(record.type==='Invoice'?'TAX INVOICE':'RUNNING ACCOUNT BILL',L,y+1);
+ font('bold',10,black);text('Invoice No.: '+(record.number||'—'),R,y+1,{align:'right'});y+=9;
+ rule(y,.35);y+=7;
+ // Work order and invoice references in a clean two-column grid.
+ const col=(W-12)/2,x2=L+col+12;
+ const a=labelValue('Invoice date',record.date,L,y,col),b=labelValue('Work order no.',record.workorder,x2,y,col);y=Math.max(a,b)+3;
+ const d=labelValue('Work order date',record.workdate,L,y,col),e=labelValue('Payment terms',record.terms,x2,y,col);y=Math.max(d,e)+6;
+ rule(y,.35);y+=7;
+ // Customer and project address blocks.
+ font('bold',8.5,black);text('BILL TO / CUSTOMER',L,y);text('PROJECT / WORK SITE',L+96,y);y+=5;
+ const cust=wrap(record.customer||'—',88),bill=wrap(record.address||'—',88),site=wrap(record.workAddress||record.place||'—',86);
+ font('bold',9,black);doc.text(cust,L,y);font('normal',8,black);doc.text(bill,L,y+cust.length*4);
+ doc.text(site,L+96,y);
+ const leftBottom=y+(cust.length+bill.length)*4+3,rightBottom=y+site.length*4+3;y=Math.max(leftBottom,rightBottom);
+ font('normal',7.5,grey);text('GSTIN: '+(record.gstin||'—')+'     State Code: '+(record.state||'—'),L,y+1);y+=7;
+ rule(y,.35);y+=8;
+ // Services table, black text and simple horizontal rules.
+ font('bold',8.5,black);text('DESCRIPTION OF SERVICES',L,y);y+=6;
+ const xs=[L,L+10,L+91,L+111,L+130,L+151,R],widths=[10,81,20,19,21,24,20];
+ const headers=['Sr.','Description of Services','HSN/SAC','GST Rate','Qty (MT)','Rate','Amount'];
+ doc.setFillColor(...pale);doc.rect(L,y-4,W,8,'F');font('bold',7,black);
+ headers.forEach((h,i)=>{let x=xs[i],w=widths[i];text(h,i<2?x+2:x+w-2,y+1,{align:i<2?'left':'right'})});
+ y+=6;doc.setDrawColor(...line);doc.setLineWidth(.2);doc.line(L,y,R,y);
  (record.lines||[]).forEach((l,i)=>{
-   let desc=wrap(l.description,65),h=Math.max(9,desc.length*4+4);ensure(h+2);
-   if(i%2===0){doc.setFillColor(248,250,252);doc.rect(left,y,content,h,'F')}
-   txt(i+1,16,y+5);doc.text(desc,26,y+5);txt(l.sac||'',96,y+5);txt((l.gstRate??record.gstRate??0)+'%',118,y+5);txt(l.qty??'',139,y+5);txt(money(l.rate).replace('₹',''),174,y+5,{align:'right'});txt(money(l.amount).replace('₹',''),194,y+5,{align:'right'});y+=h;
+  const desc=wrap(l.description||'',78),h=Math.max(8,desc.length*4+3);ensure(h+2);
+  font('normal',7.5,black);text(i+1,xs[0]+2,y+5);
+  doc.text(desc,xs[1]+2,y+5);
+  text(l.sac||'—',xs[2]+widths[2]-2,y+5,{align:'right'});
+  text((l.gstRate??record.gstRate??0)+'%',xs[3]+widths[3]-2,y+5,{align:'right'});
+  text(l.qty??'—',xs[4]+widths[4]-2,y+5,{align:'right'});
+  text(Number(l.rate||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}),xs[5]+widths[5]-2,y+5,{align:'right'});
+  text(Number(l.amount||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}),R-2,y+5,{align:'right'});
+  y+=h;doc.setDrawColor(...line);doc.line(L,y,R,y);
  });
- doc.setDrawColor(210,218,226);doc.line(left,y,right,y);y+=5;
- const totals=[['Taxable value',money(record.taxable)]];
- if(record.interstate)totals.push(['IGST',money(record.tax)]);else{totals.push(['CGST',money((record.tax||0)/2)]);totals.push(['SGST',money((record.tax||0)/2)])}
- totals.push(['ROUND OFF',money((record.total||0)-Math.round(record.total||0))],['TOTAL INVOICE VALUE',money(record.total)]);
- let tx=116,ty=y;totals.forEach(([a,b],i)=>{ensure(7);if(i===totals.length-1){doc.setFillColor(...light);doc.rect(tx,ty-4,80,9,'F');doc.setFont('helvetica','bold')}else doc.setFont('helvetica','normal');doc.setFontSize(i===totals.length-1?9:8);txt(a,tx+2,ty+2);txt(b,194,ty+2,{align:'right'});ty+=7});y=Math.max(y+8,ty+3);
- ensure(35);section('AMOUNT & BANK DETAILS');
- field('Amount chargeable (in words)',record.amountWords||'Amount in words to be verified',left,y,90);
- field('Bank details',record.bank||c.bank||'Please configure bank details in Settings',left+96,y,86);y+=22;
- ensure(25);section('DECLARATION');
- doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(55,65,75);
- let decl=wrap(record.declaration||'We declare that this invoice shows the actual price of the services described and that all particulars are true and correct.',content-4);doc.text(decl,left+2,y);y+=Math.max(10,decl.length*4+5);
- ensure(22);doc.setFont('helvetica','bold');doc.setFontSize(8);txt('For '+(c.company||'SUNRISE PRESTRESS PROJECTS'),right,y+5,{align:'right'});doc.setFont('helvetica','normal');txt('Authorised Signatory',right,y+17,{align:'right'});
- doc.setFontSize(7);doc.setTextColor(...grey);txt('Computer-generated document • Please verify statutory particulars before issue',105,289,{align:'center'});
+ y+=7;
+ // Totals aligned to the right, without decorative cards.
+ const totalRows=[['Taxable value',fmt(record.taxable)]];
+ if(record.interstate)totalRows.push(['IGST',fmt(record.tax)]);else totalRows.push(['CGST',fmt((record.tax||0)/2)],['SGST',fmt((record.tax||0)/2)]);
+ const total=Number(record.total||0),rounded=Math.round(total),roundOff=Number((rounded-total).toFixed(2));
+ if(Math.abs(roundOff)>=0.01)totalRows.push(['ROUND OFF',fmt(roundOff)]);
+ totalRows.push(['TOTAL INVOICE VALUE',fmt(total)]);
+ const tx=116,tw=80;totalRows.forEach(([name,value],i)=>{ensure(7);if(i===totalRows.length-1){doc.setDrawColor(...black);doc.setLineWidth(.5);doc.line(tx,y-2,R,y-2);font('bold',9,black)}else font('normal',8,black);text(name,tx,y+2);text(value,R,y+2,{align:'right'});y+=7});
+ y+=5;ensure(31);rule(y,.35);y+=7;
+ font('bold',8,black);text('AMOUNT CHARGEABLE (IN WORDS)',L,y);text('BANK DETAILS',L+96,y);
+ font('normal',8,black);const words=wrap(record.amountWords||'To be confirmed',88),bank=wrap(record.bank||c.bank||'Please configure bank details in Settings',86);
+ doc.text(words,L,y+5);doc.text(bank,L+96,y+5);y+=Math.max(words.length,bank.length)*4+11;
+ ensure(25);rule(y,.35);y+=7;font('bold',8,black);text('DECLARATION',L,y);y+=5;
+ font('normal',7.5,black);const declaration=wrap(record.declaration||'We declare that this invoice shows the actual price of the services described and that all particulars are true and correct.',W);doc.text(declaration,L,y);y+=declaration.length*4+12;
+ ensure(24);font('bold',8.5,black);text('For '+(c.company||'SUNRISE PRESTRESS PROJECTS'),R,y+5,{align:'right'});
+ font('normal',8,black);text('Authorised Signatory',R,y+19,{align:'right'});
+ const pages=doc.getNumberOfPages();for(let p=1;p<=pages;p++){doc.setPage(p);doc.setDrawColor(...line);doc.setLineWidth(.2);doc.line(L,284,R,284);font('normal',7,grey);text('Computer-generated document  |  '+(record.number||''),105,289,{align:'center'})}
  return doc.output('blob');
 }
 function downloadBlob(blob,filename){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}

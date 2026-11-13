@@ -1,4 +1,4 @@
-# TaxFlow v5 — invoice autocomplete and workbook layout update
+# TaxFlow v9 — classic plain invoice layout
 
 ## Publish/update
 Replace the files in the root of your existing GitHub Pages repository with these files. Keep the repository public app files only; never upload customer invoices, backups or private financial data.
@@ -39,3 +39,12 @@ This is a prototype, not certified GST/accounting software. GST calculations are
 - Updated the service-worker cache version so GitHub Pages clients fetch the new interface after refresh.
 
 **Note:** PDF generation uses jsPDF from a CDN, so the first PDF generation requires an internet connection. After the app has loaded and the library is cached by the browser, availability may improve offline, but do not rely on offline PDF generation until tested.
+
+
+## v9 classic invoice layout
+- Removed the colored masthead, colored invoice-number panel, rounded cards and decorative styling from the PDF. No logo is included.
+- Uses a plain white A4 page, black typography, restrained grey rules, simple table headings and aligned totals for a traditional business invoice.
+- Invoice number is placed on the same line as the TAX INVOICE heading. Work order number and date remain clearly visible near the top.
+- Service table, buyer GSTIN, billing/site addresses, bank details and declaration are retained.
+- Corrected round-off presentation: only a non-zero round-off line is shown, and the total remains the exact saved invoice total.
+- Service worker cache updated to v9 so deployed clients can load the revised PDF code.
