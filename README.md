@@ -23,3 +23,9 @@ Use JSON export/import for invoice/RA records, customers, services and company s
 
 ## Important limitations
 This is a prototype, not certified GST/accounting software. GST calculations are simplified and manual intra/inter-state selection is provided. The app does not determine place of supply, validate GST law, support IRN/e-invoice, e-way bills, credit/debit notes, cancellation workflow or audit logs. Confirm SAC, rates, GST treatment, TDS, labour cess and place-of-supply with your CA before statutory use. Some historical Excel invoices have inconsistent formulas/tax labels; these have not been copied as calculation rules.
+
+
+## v6 invoice layout update
+- Reworked A4 PDF invoice layout with company masthead, buyer and project/site address blocks, work order metadata, styled service table, tax summary, bank details and declaration/signature area.
+- Company identity is stored once in Settings and reused on each PDF. Customer master selection fills saved buyer details; project site remains invoice-specific.
+- Confirm all company bank/GST details and statutory invoice fields before real issue.
