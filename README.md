@@ -1,4 +1,4 @@
-# TaxFlow v9 — classic plain invoice layout
+# TaxFlow v10 — classic plain invoice layout
 
 ## Publish/update
 Replace the files in the root of your existing GitHub Pages repository with these files. Keep the repository public app files only; never upload customer invoices, backups or private financial data.
@@ -48,3 +48,6 @@ This is a prototype, not certified GST/accounting software. GST calculations are
 - Service table, buyer GSTIN, billing/site addresses, bank details and declaration are retained.
 - Corrected round-off presentation: only a non-zero round-off line is shown, and the total remains the exact saved invoice total.
 - Service worker cache updated to v9 so deployed clients can load the revised PDF code.
+
+
+Version 10 fix: corrected invoice table column boundaries and right-aligned header/value positions so Rate and Amount remain within the A4 printable width.

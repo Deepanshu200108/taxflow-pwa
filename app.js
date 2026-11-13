@@ -45,20 +45,21 @@ async function savePDF(record){
  rule(y,.35);y+=8;
  // Services table, black text and simple horizontal rules.
  font('bold',8.5,black);text('DESCRIPTION OF SERVICES',L,y);y+=6;
- const xs=[L,L+10,L+91,L+111,L+130,L+151,R],widths=[10,81,20,19,21,24,20];
+ const widths=[10,74,18,18,18,20,24];
+ const xs=[L];for(const w of widths)xs.push(xs[xs.length-1]+w);
  const headers=['Sr.','Description of Services','HSN/SAC','GST Rate','Qty (MT)','Rate','Amount'];
- doc.setFillColor(...pale);doc.rect(L,y-4,W,8,'F');font('bold',7,black);
- headers.forEach((h,i)=>{let x=xs[i],w=widths[i];text(h,i<2?x+2:x+w-2,y+1,{align:i<2?'left':'right'})});
+ doc.setFillColor(...pale);doc.rect(L,y-4,W,8,'F');font('bold',6.8,black);
+ headers.forEach((h,i)=>{const left=xs[i],right=xs[i+1];text(h,i<2?left+2:right-2,y+1,{align:i<2?'left':'right'})});
  y+=6;doc.setDrawColor(...line);doc.setLineWidth(.2);doc.line(L,y,R,y);
  (record.lines||[]).forEach((l,i)=>{
   const desc=wrap(l.description||'',78),h=Math.max(8,desc.length*4+3);ensure(h+2);
   font('normal',7.5,black);text(i+1,xs[0]+2,y+5);
   doc.text(desc,xs[1]+2,y+5);
-  text(l.sac||'—',xs[2]+widths[2]-2,y+5,{align:'right'});
-  text((l.gstRate??record.gstRate??0)+'%',xs[3]+widths[3]-2,y+5,{align:'right'});
-  text(l.qty??'—',xs[4]+widths[4]-2,y+5,{align:'right'});
-  text(Number(l.rate||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}),xs[5]+widths[5]-2,y+5,{align:'right'});
-  text(Number(l.amount||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}),R-2,y+5,{align:'right'});
+  text(l.sac||'—',xs[3]-2,y+5,{align:'right'});
+  text((l.gstRate??record.gstRate??0)+'%',xs[4]-2,y+5,{align:'right'});
+  text(l.qty??'—',xs[5]-2,y+5,{align:'right'});
+  text(Number(l.rate||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}),xs[6]-2,y+5,{align:'right'});
+  text(Number(l.amount||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}),xs[7]-2,y+5,{align:'right'});
   y+=h;doc.setDrawColor(...line);doc.line(L,y,R,y);
  });
  y+=7;
